@@ -19,15 +19,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const cookieBtn = document.getElementById('cookie-btn');
   const countDisplay = document.getElementById('count');
   const resetBtn = document.getElementById('reset-btn');
+  const toastContainer = document.getElementById('toast-container');
+
+  const achievements = [
+    { threshold: 10, id: 'trophy-10', name: 'Bronze', icon: '🥉' },
+    { threshold: 100, id: 'trophy-100', name: 'Silver', icon: '🥈' },
+    { threshold: 1000, id: 'trophy-1000', name: 'Gold', icon: '🥇' }
+  ];
 
   // Load saved click count from browser cookie or default to 0
   let count = parseInt(getCookie('cookieClickCount'), 10) || 0;
   countDisplay.textContent = count;
 
+  // Initialize achievements state based on loaded count
+  checkAchievements(count, false);
+
   cookieBtn.addEventListener('click', (e) => {
     count++;
     countDisplay.textContent = count;
     setCookie('cookieClickCount', count);
+
+    // Check for achievement unlocks
+    checkAchievements(count, true);
 
     // Bounce animation for count display
     countDisplay.style.transform = 'scale(1.2)';
@@ -43,7 +56,38 @@ document.addEventListener('DOMContentLoaded', () => {
     count = 0;
     countDisplay.textContent = count;
     setCookie('cookieClickCount', count);
+    checkAchievements(count, false);
   });
+
+  function checkAchievements(currentCount, notify = true) {
+    achievements.forEach((ach) => {
+      const el = document.getElementById(ach.id);
+      if (!el) return;
+
+      if (currentCount >= ach.threshold) {
+        if (!el.classList.contains('unlocked')) {
+          el.classList.add('unlocked');
+          if (notify) {
+            showToast(`${ach.icon} Unlocked ${ach.name} Trophy (${ach.threshold} clicks)!`);
+          }
+        }
+      } else {
+        el.classList.remove('unlocked');
+      }
+    });
+  }
+
+  function showToast(message) {
+    if (!toastContainer) return;
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
 
   function createFloatingText(e) {
     const rect = cookieBtn.getBoundingClientRect();

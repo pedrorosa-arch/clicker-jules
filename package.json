@@ -1,0 +1,11 @@
+{
+  "name": "cookie-clicker",
+  "version": "1.0.0",
+  "description": "Cookie Clicker web application with achievement system",
+  "scripts": {
+    "test": "playwright test verification"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.0"
+  }
+}
