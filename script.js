@@ -1,10 +1,19 @@
 // Security & Anti-tampering helper functions
 const SECRET_SALT = 'CookieClickerSecuritySalt_2025';
 
+const ACHIEVEMENTS = [
+  { id: 'first_click', icon: '🍪', name: 'Primer Clic', desc: 'Presiona la galleta por primera vez', target: 1 },
+  { id: 'novice', icon: '🥐', name: 'Repostero Novato', desc: 'Haz clic 10 veces', target: 10 },
+  { id: 'enthusiast', icon: '🍩', name: 'Aficionado a las Galletas', desc: 'Haz clic 50 veces', target: 50 },
+  { id: 'bakery_master', icon: '🍰', name: 'Maestro Panadero', desc: 'Haz clic 100 veces', target: 100 },
+  { id: 'cookie_legend', icon: '👑', name: 'Leyenda Galletera', desc: 'Haz clic 500 veces', target: 500 }
+];
+
 // Generates a simple checksum for string data
-function generateChecksum(data) {
+function generateChecksum(count, unlocked) {
   let hash = 0;
-  const str = data + SECRET_SALT;
+  const sortedUnlocked = Array.isArray(unlocked) ? [...unlocked].sort().join(',') : '';
+  const str = `${count}|${sortedUnlocked}|${SECRET_SALT}`;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
@@ -13,31 +22,32 @@ function generateChecksum(data) {
   return hash.toString(36);
 }
 
-// Encodes numeric count with a checksum to prevent simple cookie value editing
-function encodeCookieValue(count) {
-  const data = count.toString();
-  const checksum = generateChecksum(data);
-  const payload = JSON.stringify({ count: count, hash: checksum });
+// Encodes numeric count and unlocked achievements with a checksum to prevent simple cookie value editing
+function encodeCookieValue(count, unlocked) {
+  const safeUnlocked = Array.isArray(unlocked) ? unlocked : [];
+  const checksum = generateChecksum(count, safeUnlocked);
+  const payload = JSON.stringify({ count: count, unlocked: safeUnlocked, hash: checksum });
   return btoa(payload); // Base64 encode
 }
 
 // Decodes cookie value and validates checksum integrity
 function decodeCookieValue(encodedVal) {
-  if (!encodedVal) return 0;
+  const defaultResult = { count: 0, unlocked: [] };
+  if (!encodedVal) return defaultResult;
   try {
     const jsonStr = atob(encodedVal);
     const parsed = JSON.parse(jsonStr);
-    if (typeof parsed.count === 'number' && parsed.hash) {
-      const expectedHash = generateChecksum(parsed.count.toString());
+    if (typeof parsed.count === 'number' && Array.isArray(parsed.unlocked) && parsed.hash) {
+      const expectedHash = generateChecksum(parsed.count, parsed.unlocked);
       if (parsed.hash === expectedHash && parsed.count >= 0) {
-        return parsed.count;
+        return { count: parsed.count, unlocked: parsed.unlocked };
       }
     }
   } catch (e) {
     // Tampered or invalid cookie value detected
-    console.warn('Cookie tampering or invalid data detected. Resetting count.');
+    console.warn('Cookie tampering or invalid data detected. Resetting count and achievements.');
   }
-  return 0; // Fallback to 0 if tampered or invalid
+  return defaultResult; // Fallback if tampered or invalid
 }
 
 // Helper functions for browser cookies (document.cookie)
@@ -95,16 +105,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const cookieBtn = document.getElementById('cookie-btn');
   const countDisplay = document.getElementById('count');
   const resetBtn = document.getElementById('reset-btn');
+  const achievementsListEl = document.getElementById('achievements-list');
+  const achievementsProgressEl = document.getElementById('achievements-progress');
+  const toastContainer = document.getElementById('toast-container');
 
-  // Load saved click count from browser cookie with checksum verification
+  // Load saved click count and achievements from browser cookie with checksum verification
   const rawCookie = getCookie('cookieClickData');
-  let count = decodeCookieValue(rawCookie);
+  const savedData = decodeCookieValue(rawCookie);
+  let count = savedData.count;
+  let unlockedAchievements = new Set(savedData.unlocked);
+
   countDisplay.textContent = count;
+  renderAchievements();
 
   cookieBtn.addEventListener('click', (e) => {
     count++;
     countDisplay.textContent = count;
-    setCookie('cookieClickData', encodeCookieValue(count));
+
+    // Check for newly unlocked achievements
+    checkAchievements();
+
+    // Save updated count and achievements
+    saveState();
 
     // Bounce animation for count display
     countDisplay.style.transform = 'scale(1.2)';
@@ -118,9 +140,67 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetBtn.addEventListener('click', () => {
     count = 0;
+    unlockedAchievements.clear();
     countDisplay.textContent = count;
-    setCookie('cookieClickData', encodeCookieValue(count));
+    saveState();
+    renderAchievements();
   });
+
+  function saveState() {
+    const unlockedArray = Array.from(unlockedAchievements);
+    setCookie('cookieClickData', encodeCookieValue(count, unlockedArray));
+  }
+
+  function checkAchievements() {
+    ACHIEVEMENTS.forEach((ach) => {
+      if (!unlockedAchievements.has(ach.id) && count >= ach.target) {
+        unlockedAchievements.add(ach.id);
+        showToast(ach);
+        renderAchievements();
+      }
+    });
+  }
+
+  function renderAchievements() {
+    achievementsListEl.innerHTML = '';
+    let unlockedCount = 0;
+
+    ACHIEVEMENTS.forEach((ach) => {
+      const isUnlocked = unlockedAchievements.has(ach.id);
+      if (isUnlocked) unlockedCount++;
+
+      const card = document.createElement('div');
+      card.className = `achievement-card ${isUnlocked ? 'unlocked' : ''}`;
+      card.innerHTML = `
+        <div class="achievement-icon">${ach.icon}</div>
+        <div class="achievement-info">
+          <div class="achievement-name">${ach.name}</div>
+          <div class="achievement-desc">${ach.desc}</div>
+        </div>
+        ${isUnlocked ? '<div class="achievement-badge">✓</div>' : ''}
+      `;
+      achievementsListEl.appendChild(card);
+    });
+
+    achievementsProgressEl.textContent = `${unlockedCount} / ${ACHIEVEMENTS.length}`;
+  }
+
+  function showToast(achievement) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `
+      <div class="toast-icon">${achievement.icon}</div>
+      <div>
+        <div class="toast-title">¡Logro Desbloqueado!</div>
+        <div class="toast-desc">${achievement.name} - ${achievement.desc}</div>
+      </div>
+    `;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 4000);
+  }
 
   function createFloatingText(e) {
     const rect = cookieBtn.getBoundingClientRect();

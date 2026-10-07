@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,19 +20,79 @@
       align-items: center;
       justify-content: center;
       user-select: none;
-      overflow: hidden;
+      overflow-x: hidden;
       color: #3e2723;
+      padding: 20px 10px;
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #3e2723;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-left: 5px solid #ffb300;
+      animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 3.5s forwards;
+      pointer-events: auto;
+    }
+
+    .toast-icon {
+      font-size: 1.5rem;
+    }
+
+    .toast-title {
+      font-weight: bold;
+      font-size: 0.95rem;
+      color: #ffb300;
+    }
+
+    .toast-desc {
+      font-size: 0.85rem;
+      color: #e0e0e0;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
     }
 
     .container {
       text-align: center;
-      background: rgba(255, 255, 255, 0.85);
-      padding: 2.5rem;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2rem;
       border-radius: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
       backdrop-filter: blur(8px);
-      max-width: 400px;
-      width: 90%;
+      max-width: 460px;
+      width: 100%;
       position: relative;
     }
 
@@ -43,9 +103,9 @@
     }
 
     .counter-display {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 600;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
       color: #6d4c41;
     }
 
@@ -61,12 +121,12 @@
       position: relative;
       display: inline-block;
       cursor: pointer;
-      margin: 1rem 0;
+      margin: 0.5rem 0 1.5rem 0;
     }
 
     .cookie {
-      width: 180px;
-      height: 180px;
+      width: 170px;
+      height: 170px;
       border-radius: 50%;
       background: radial-gradient(circle at 30% 30%, #e0a96d, #b87333);
       box-shadow: inset -8px -8px 15px rgba(0, 0, 0, 0.3),
@@ -122,7 +182,7 @@
     }
 
     .controls {
-      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
     }
 
     .btn-reset {
@@ -143,14 +203,107 @@
     .btn-reset:active {
       transform: scale(0.95);
     }
+
+    /* Achievements Section */
+    .achievements-section {
+      margin-top: 1.5rem;
+      border-top: 2px dashed #d7ccc8;
+      padding-top: 1.2rem;
+      text-align: left;
+    }
+
+    .achievements-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .achievements-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #4a2c11;
+    }
+
+    .achievements-progress {
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #e02810;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    .achievements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .achievement-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: #f5f5f5;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      transition: all 0.2s ease;
+      opacity: 0.55;
+      filter: grayscale(80%);
+    }
+
+    .achievement-card.unlocked {
+      opacity: 1;
+      filter: grayscale(0%);
+      background: #fff8e1;
+      border-color: #ffe082;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .achievement-icon {
+      font-size: 1.8rem;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .achievement-info {
+      flex: 1;
+    }
+
+    .achievement-name {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #3e2723;
+    }
+
+    .achievement-desc {
+      font-size: 0.78rem;
+      color: #757575;
+    }
+
+    .achievement-card.unlocked .achievement-desc {
+      color: #5d4037;
+    }
+
+    .achievement-badge {
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: #388e3c;
+    }
   </style>
 </head>
 <body>
 
+  <div id="toast-container"></div>
+
   <div class="container">
     <h1>Cookie Clicker</h1>
     <div class="counter-display">
-      Clicks: <span id="count" class="count-number">0</span>
+      Clics: <span id="count" class="count-number">0</span>
     </div>
 
     <div class="cookie-wrapper" id="cookie-btn">
@@ -166,7 +319,17 @@
     </div>
 
     <div class="controls">
-      <button id="reset-btn" class="btn-reset">Reset Counter</button>
+      <button id="reset-btn" class="btn-reset">Reiniciar Contador</button>
+    </div>
+
+    <div class="achievements-section">
+      <div class="achievements-header">
+        <span class="achievements-title">🏆 Logros</span>
+        <span id="achievements-progress" class="achievements-progress">0 / 5</span>
+      </div>
+      <div class="achievements-list" id="achievements-list">
+        <!-- Generated by script.js -->
+      </div>
     </div>
   </div>
 
