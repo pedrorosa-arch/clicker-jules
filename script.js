@@ -1,3 +1,45 @@
+// Security & Anti-tampering helper functions
+const SECRET_SALT = 'CookieClickerSecuritySalt_2025';
+
+// Generates a simple checksum for string data
+function generateChecksum(data) {
+  let hash = 0;
+  const str = data + SECRET_SALT;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash.toString(36);
+}
+
+// Encodes numeric count with a checksum to prevent simple cookie value editing
+function encodeCookieValue(count) {
+  const data = count.toString();
+  const checksum = generateChecksum(data);
+  const payload = JSON.stringify({ count: count, hash: checksum });
+  return btoa(payload); // Base64 encode
+}
+
+// Decodes cookie value and validates checksum integrity
+function decodeCookieValue(encodedVal) {
+  if (!encodedVal) return 0;
+  try {
+    const jsonStr = atob(encodedVal);
+    const parsed = JSON.parse(jsonStr);
+    if (typeof parsed.count === 'number' && parsed.hash) {
+      const expectedHash = generateChecksum(parsed.count.toString());
+      if (parsed.hash === expectedHash && parsed.count >= 0) {
+        return parsed.count;
+      }
+    }
+  } catch (e) {
+    // Tampered or invalid cookie value detected
+    console.warn('Cookie tampering or invalid data detected. Resetting count.');
+  }
+  return 0; // Fallback to 0 if tampered or invalid
+}
+
 // Helper functions for browser cookies (document.cookie)
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -15,32 +57,54 @@ function setCookie(name, value, days = 365) {
   document.cookie = `${name}=${value}; ${expires}; path=/; SameSite=Lax`;
 }
 
+// Security: Prevent Right-Click Context Menu
+document.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  return false;
+});
+
+// Security: Prevent Developer Tools Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+  // F12 key
+  if (e.key === 'F12' || e.keyCode === 123) {
+    e.preventDefault();
+    return false;
+  }
+
+  // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element picker)
+  // Cmd+Option+I/J/C on Mac
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+    e.preventDefault();
+    return false;
+  }
+
+  // Ctrl+U / Cmd+Option+U (View Source)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
+    e.preventDefault();
+    return false;
+  }
+
+  // Ctrl+S / Cmd+S (Save page)
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'S' || e.key === 's')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   const cookieBtn = document.getElementById('cookie-btn');
   const countDisplay = document.getElementById('count');
   const resetBtn = document.getElementById('reset-btn');
-  const toastContainer = document.getElementById('toast-container');
 
-  const achievements = [
-    { threshold: 10, id: 'trophy-10', name: 'Bronze', icon: '🥉' },
-    { threshold: 100, id: 'trophy-100', name: 'Silver', icon: '🥈' },
-    { threshold: 1000, id: 'trophy-1000', name: 'Gold', icon: '🥇' }
-  ];
-
-  // Load saved click count from browser cookie or default to 0
-  let count = parseInt(getCookie('cookieClickCount'), 10) || 0;
+  // Load saved click count from browser cookie with checksum verification
+  const rawCookie = getCookie('cookieClickData');
+  let count = decodeCookieValue(rawCookie);
   countDisplay.textContent = count;
-
-  // Initialize achievements state based on loaded count
-  checkAchievements(count, false);
 
   cookieBtn.addEventListener('click', (e) => {
     count++;
     countDisplay.textContent = count;
-    setCookie('cookieClickCount', count);
-
-    // Check for achievement unlocks
-    checkAchievements(count, true);
+    setCookie('cookieClickData', encodeCookieValue(count));
 
     // Bounce animation for count display
     countDisplay.style.transform = 'scale(1.2)';
@@ -55,39 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBtn.addEventListener('click', () => {
     count = 0;
     countDisplay.textContent = count;
-    setCookie('cookieClickCount', count);
-    checkAchievements(count, false);
+    setCookie('cookieClickData', encodeCookieValue(count));
   });
-
-  function checkAchievements(currentCount, notify = true) {
-    achievements.forEach((ach) => {
-      const el = document.getElementById(ach.id);
-      if (!el) return;
-
-      if (currentCount >= ach.threshold) {
-        if (!el.classList.contains('unlocked')) {
-          el.classList.add('unlocked');
-          if (notify) {
-            showToast(`${ach.icon} Unlocked ${ach.name} Trophy (${ach.threshold} clicks)!`);
-          }
-        }
-      } else {
-        el.classList.remove('unlocked');
-      }
-    });
-  }
-
-  function showToast(message) {
-    if (!toastContainer) return;
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    toastContainer.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  }
 
   function createFloatingText(e) {
     const rect = cookieBtn.getBoundingClientRect();
