@@ -170,53 +170,6 @@
     </div>
   </div>
 
-  <script>
-    const cookieBtn = document.getElementById('cookie-btn');
-    const countDisplay = document.getElementById('count');
-    const resetBtn = document.getElementById('reset-btn');
-
-    // Load saved count or default to 0
-    let count = parseInt(localStorage.getItem('cookieClickCount')) || 0;
-    countDisplay.textContent = count;
-
-    cookieBtn.addEventListener('click', (e) => {
-      count++;
-      countDisplay.textContent = count;
-      localStorage.setItem('cookieClickCount', count);
-
-      // Bounce animation for count
-      countDisplay.style.transform = 'scale(1.2)';
-      setTimeout(() => {
-        countDisplay.style.transform = 'scale(1)';
-      }, 100);
-
-      // Create floating +1 text
-      createFloatingText(e);
-    });
-
-    resetBtn.addEventListener('click', () => {
-      count = 0;
-      countDisplay.textContent = count;
-      localStorage.setItem('cookieClickCount', count);
-    });
-
-    function createFloatingText(e) {
-      const rect = cookieBtn.getBoundingClientRect();
-      const x = e.clientX ? e.clientX - rect.left : rect.width / 2;
-      const y = e.clientY ? e.clientY - rect.top : rect.height / 2;
-
-      const floatEl = document.createElement('span');
-      floatEl.className = 'floating-text';
-      floatEl.textContent = '+1';
-      floatEl.style.left = `${x}px`;
-      floatEl.style.top = `${y}px`;
-
-      cookieBtn.appendChild(floatEl);
-
-      setTimeout(() => {
-        floatEl.remove();
-      }, 800);
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
