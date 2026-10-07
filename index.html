@@ -121,6 +121,102 @@
       }
     }
 
+    /* Achievements section */
+    .achievements-section {
+      margin-top: 1.5rem;
+      border-top: 1px solid rgba(109, 76, 65, 0.2);
+      padding-top: 1rem;
+    }
+
+    .achievements-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #4a2c11;
+      margin-bottom: 0.8rem;
+    }
+
+    .trophies-container {
+      display: flex;
+      justify-content: space-around;
+      gap: 0.5rem;
+    }
+
+    .trophy-card {
+      background: rgba(255, 255, 255, 0.6);
+      border: 2px solid #d7ccc8;
+      border-radius: 12px;
+      padding: 0.6rem 0.4rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.3s ease;
+      opacity: 0.5;
+      filter: grayscale(100%);
+      position: relative;
+    }
+
+    .trophy-card.unlocked {
+      opacity: 1;
+      filter: grayscale(0%);
+      border-color: #fbc02d;
+      background: linear-gradient(135deg, #fffde7 0%, #fff9c4 100%);
+      box-shadow: 0 4px 10px rgba(251, 192, 45, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .trophy-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .trophy-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #5d4037;
+    }
+
+    .trophy-threshold {
+      font-size: 0.7rem;
+      color: #8d6e63;
+    }
+
+    /* Achievement notification banner/toast */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #43a047;
+      color: white;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
     .controls {
       margin-top: 1.5rem;
     }
@@ -165,10 +261,33 @@
       </div>
     </div>
 
+    <div class="achievements-section">
+      <div class="achievements-title">Achievements</div>
+      <div class="trophies-container">
+        <div class="trophy-card" id="trophy-10" data-threshold="10">
+          <div class="trophy-icon">🥉</div>
+          <div class="trophy-label">Bronze</div>
+          <div class="trophy-threshold">10 Clicks</div>
+        </div>
+        <div class="trophy-card" id="trophy-100" data-threshold="100">
+          <div class="trophy-icon">🥈</div>
+          <div class="trophy-label">Silver</div>
+          <div class="trophy-threshold">100 Clicks</div>
+        </div>
+        <div class="trophy-card" id="trophy-1000" data-threshold="1000">
+          <div class="trophy-icon">🥇</div>
+          <div class="trophy-label">Gold</div>
+          <div class="trophy-threshold">1,000 Clicks</div>
+        </div>
+      </div>
+    </div>
+
     <div class="controls">
       <button id="reset-btn" class="btn-reset">Reset Counter</button>
     </div>
   </div>
+
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="script.js"></script>
 </body>
